@@ -226,7 +226,7 @@
     "options": [
       {
         "text": "a. t-test",
-        "correct": true
+        "correct": false
       },
       {
         "text": "b. ANOVA",
@@ -234,7 +234,7 @@
       },
       {
         "text": "c. Wald-Wolfowitz test",
-        "correct": false
+        "correct": true
       },
       {
         "text": "d. Test koraka za jedan uzorak",
