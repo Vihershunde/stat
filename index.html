@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html lang="sr">
+<html lang="sr-Cyrl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FMIR Kviz - Kontrola nasumičnog redosleda</title>
+    <title>ФМИР Квиз — Статистика</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.17.0/dist/contrib/auto-render.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -635,49 +638,179 @@
             margin-right: 10px;
         }
         
+        .question-text,
+        .option label,
+        .explanation,
+        .correct-answer,
+        .feedback {
+            overflow-x: auto;
+            overflow-y: hidden;
+        }
+
+        .katex {
+            font-size: 1.06em;
+        }
+
+        .option {
+            min-height: 44px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 width: 100%;
-                padding: 20px;
+                padding: 20px 15px;
             }
-            
+
             .header h1 {
                 font-size: 2.2rem;
             }
-            
+
             .header p {
                 font-size: 1.1rem;
             }
-            
+
+            .question-container {
+                padding: 20px 15px;
+                min-height: auto;
+            }
+
             .question-text {
                 font-size: 1.4rem;
             }
-            
+
+            .option {
+                padding: 15px;
+            }
+
+            .option input {
+                margin-right: 12px;
+            }
+
             .option label {
                 font-size: 1.1rem;
             }
-            
+
+            .feedback {
+                padding: 20px 15px;
+                font-size: 1.15rem;
+            }
+
+            .explanation {
+                padding: 15px;
+                font-size: 1.1rem;
+            }
+
+            .navigation-grid {
+                grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+                gap: 8px;
+                max-height: 210px;
+                overflow-y: auto;
+                padding: 4px;
+            }
+
+            .nav-btn {
+                padding: 10px 6px;
+                font-size: 1rem;
+            }
+
             .buttons-container {
                 flex-direction: column;
                 align-items: center;
                 gap: 15px;
             }
-            
+
             .btn {
                 width: 100%;
                 margin-top: 10px;
                 padding: 15px;
             }
-            
+
             .stats {
-                flex-direction: column;
-                gap: 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 15px 10px;
             }
-            
+
+            .stat-item {
+                flex: 1 1 40%;
+                padding: 5px;
+            }
+
             .controls {
                 flex-direction: column;
                 align-items: center;
                 gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            .container {
+                padding: 15px 10px;
+                margin: 5px auto;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .github-info {
+                padding: 12px;
+            }
+
+            .github-info p, .github-info a {
+                font-size: 1rem;
+            }
+
+            .question-text {
+                font-size: 1.2rem;
+                margin-bottom: 25px;
+            }
+
+            .option label {
+                font-size: 1.05rem;
+            }
+
+            .question-count {
+                font-size: 1.1rem;
+                min-width: 150px;
+            }
+
+            .stat-value {
+                font-size: 1.3rem;
+            }
+
+            .btn {
+                padding: 14px;
+                font-size: 1.1rem;
+            }
+
+            .feedback {
+                font-size: 1.05rem;
+            }
+
+            .explanation {
+                font-size: 1.05rem;
+            }
+
+            .results h2 {
+                font-size: 1.8rem;
+            }
+
+            .score {
+                font-size: 3.5rem;
+            }
+
+            .restart-btn {
+                padding: 15px 40px;
+                font-size: 1.2rem;
             }
         }
     </style>
@@ -685,12 +818,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-graduation-cap"></i> FMIR Kviz - Kontrola nasumičnog redosleda</h1>
-            <p>Prvobitni redosled pitanja sa opcijom nasumičnog prikaza</p>
+            <h1><i class="fas fa-graduation-cap"></i> ФМИР Квиз — Статистика</h1>
+            <p>Питања са објашњењима — одговорите, па научите зашто је одговор тачан</p>
         </div>
         
         <div class="github-info">
-            <p>Pitanja su automatski učitana sa GitHub repozitorijuma:</p>
+            <p>Питања се аутоматски учитавају из локалног фајла или са GitHub репозиторијума:</p>
             <p>
                 <a href="https://github.com/showmy36663/fmirquizz/blob/main/fmir_all_questions_302_fixed.json" target="_blank">
                     <i class="fab fa-github"></i> fmir_all_questions_302_fixed.json
@@ -699,7 +832,7 @@
         </div>
         
         <div id="github-status" class="github-status loading">
-            <i class="fas fa-spinner fa-spin"></i> Učitavanje pitanja sa GitHub-a...
+            <i class="fas fa-spinner fa-spin"></i> Учитавање питања...
         </div>
         
         <div class="upload-section">
@@ -707,30 +840,30 @@
                 <i class="fas fa-cloud-download-alt"></i>
             </div>
             <div class="upload-text">
-                Ukoliko želite, možete učitati i sopstveni set pitanja
+                Уколико желите, можете учитати и сопствени сет питања
             </div>
             <div class="file-input-wrapper">
                 <button class="file-input-btn">
-                    <i class="fas fa-file-import"></i> Odaberite JSON fajl
+                    <i class="fas fa-file-import"></i> Одаберите JSON фајл
                 </button>
                 <input type="file" id="json-file" accept=".json">
             </div>
-            <div id="file-name" class="file-name">Nijedan fajl nije odabran</div>
-            
+            <div id="file-name" class="file-name">Ниједан фајл није одабран</div>
+
             <div class="controls">
                 <button id="start-quiz-btn" class="btn">
-                    <i class="fas fa-play-circle"></i> Pokreni kviz
+                    <i class="fas fa-play-circle"></i> Покрени квиз
                 </button>
             </div>
         </div>
         
         <div class="error-message" id="error-message">
-            <p><i class="fas fa-exclamation-triangle"></i> Došlo je do greške pri učitavanju fajla.</p>
-            <p>Proverite da li je fajl u ispravnom JSON formatu.</p>
+            <p><i class="fas fa-exclamation-triangle"></i> Дошло је до грешке при учитавању фајла.</p>
+            <p>Проверите да ли је фајл у исправном JSON формату.</p>
         </div>
-        
+
         <div class="random-info" id="random-info">
-            <p><i class="fas fa-random"></i> Trenutno je uključen nasumični redosled pitanja</p>
+            <p><i class="fas fa-random"></i> Тренутно је укључен насумични редослед питања</p>
         </div>
         
         <div class="progress-container" id="progress-container">
@@ -740,19 +873,19 @@
         
         <div class="stats" id="stats">
             <div class="stat-item">
-                <div>Pitanje</div>
+                <div>Питање</div>
                 <div class="stat-value" id="question-count">0/0</div>
             </div>
             <div class="stat-item">
-                <div>Tačno</div>
+                <div>Тачно</div>
                 <div class="stat-value" id="correct-count">0</div>
             </div>
             <div class="stat-item">
-                <div>Netačno</div>
+                <div>Нетачно</div>
                 <div class="stat-value" id="incorrect-count">0</div>
             </div>
             <div class="stat-item">
-                <div>Procenat</div>
+                <div>Проценат</div>
                 <div class="stat-value" id="accuracy">0%</div>
             </div>
         </div>
@@ -760,7 +893,7 @@
         <div id="navigation-grid" class="navigation-grid"></div>
         
         <div class="question-container" id="question-container">
-            <div class="question-count" id="question-counter">Pitanje 1/10</div>
+            <div class="question-count" id="question-counter">Питање 1/10</div>
             <div class="question-text" id="question-text"></div>
             <div class="options-container-question" id="options-container"></div>
         </div>
@@ -768,23 +901,23 @@
         <div id="feedback" class="feedback"></div>
         
         <div class="buttons-container" id="buttons-container">
-            <button id="prev-btn" class="btn"><i class="fas fa-arrow-left"></i> Prethodno</button>
-            <button id="submit-btn" class="btn">Potvrdi odgovor</button>
+            <button id="prev-btn" class="btn"><i class="fas fa-arrow-left"></i> Претходно</button>
+            <button id="submit-btn" class="btn">Потврди одговор</button>
             <button id="random-mode-btn" class="btn random-mode-btn">
-                <i class="fas fa-random"></i> Nasumična pitanja: Isključeno
+                <i class="fas fa-random"></i> Насумична питања: Искључено
             </button>
-            <button id="next-btn" class="btn">Sledeće <i class="fas fa-arrow-right"></i></button>
+            <button id="next-btn" class="btn">Следеће <i class="fas fa-arrow-right"></i></button>
         </div>
         
         <div id="results" class="results">
-            <h2>Rezultati kviza</h2>
+            <h2>Резултати квиза</h2>
             <div class="score" id="final-score">0/0</div>
             <p id="result-message"></p>
-            <button class="restart-btn" id="restart-btn"><i class="fas fa-redo"></i> Pokreni ponovo</button>
+            <button class="restart-btn" id="restart-btn"><i class="fas fa-redo"></i> Покрени поново</button>
         </div>
-        
+
         <div class="footer">
-            <p>FMIR Kviz aplikacija &copy; 2023 | Napredni sistem za učenje finansijskog menadžmenta</p>
+            <p>ФМИР Квиз апликација &copy; 2023 | Систем за учење статистике кроз питања и објашњења</p>
         </div>
     </div>
 
@@ -831,42 +964,65 @@
         const navigationGrid = document.getElementById('navigation-grid');
         const randomInfo = document.getElementById('random-info');
 
-        // Funkcija za učitavanje JSON-a sa GitHub-a
-        async function loadGitHubQuestions() {
+        // Рендеровање LaTeX формула (KaTeX auto-render, само \( ... \) делимитери)
+        function renderMath(element) {
+            if (typeof renderMathInElement === 'function') {
+                renderMathInElement(element, {
+                    delimiters: [{ left: '\\(', right: '\\)', display: false }],
+                    throwOnError: false
+                });
+            }
+        }
+
+        // Учитавање питања: прво локални фајл, затим GitHub као резерва
+        async function loadQuestions() {
             githubStatus.style.display = 'block';
             githubStatus.className = 'github-status loading';
-            githubStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Učitavanje pitanja sa GitHub-a...';
-            
-            try {
-                // Koristimo raw URL za GitHub sadržaj
-                const response = await fetch('https://raw.githubusercontent.com/showmy36663/fmirquizz/main/fmir_all_questions_302_fixed.json');
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP greška! Status: ${response.status}`);
+            githubStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Учитавање питања...';
+
+            const sources = [
+                { url: './fmir_all_questions_302_fixed.json', name: 'локалног фајла' },
+                { url: 'https://raw.githubusercontent.com/showmy36663/fmirquizz/main/fmir_all_questions_302_fixed.json', name: 'GitHub репозиторијума' }
+            ];
+
+            let lastError = null;
+            for (const source of sources) {
+                try {
+                    const response = await fetch(source.url);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP грешка! Статус: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    // Валидација JSON-а
+                    if (!Array.isArray(data) || data.length === 0) {
+                        throw new Error('Неисправан формат JSON фајла — низ питања је празан');
+                    }
+
+                    quizData = data;
+                    originalOrder = [...quizData]; // Сачувај оригинални редослед
+
+                    githubStatus.className = 'github-status success';
+                    githubStatus.innerHTML = `<i class="fas fa-check-circle"></i> Питања су успешно учитана из ${source.name}!`;
+
+                    // Припрема квиза
+                    prepareQuiz();
+                    return;
+
+                } catch (error) {
+                    console.error(`Грешка при учитавању питања (${source.url}):`, error);
+                    lastError = error;
                 }
-                
-                quizData = await response.json();
-                originalOrder = [...quizData]; // Sačuvaj originalni redosled
-                
-                // Validacija JSON-a
-                if (!Array.isArray(quizData) || quizData.length === 0) {
-                    throw new Error('Neispravan format JSON fajla - niz pitanja je prazan');
-                }
-                
-                githubStatus.className = 'github-status success';
-                githubStatus.innerHTML = '<i class="fas fa-check-circle"></i> Pitanja su uspešno učitana sa GitHub-a!';
-                
-                // Priprema kviza
-                prepareQuiz();
-                
-            } catch (error) {
-                console.error('Greška pri učitavanju pitanja sa GitHub-a:', error);
-                githubStatus.className = 'github-status error';
-                githubStatus.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Došlo je do greške pri učitavanju pitanja: ${error.message}`;
-                
-                // Prikaži opciju za ručno učitavanje
-                document.querySelector('.upload-section').style.display = 'block';
             }
+
+            githubStatus.className = 'github-status error';
+            githubStatus.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Дошло је до грешке при учитавању питања: ';
+            githubStatus.appendChild(document.createTextNode(lastError ? lastError.message : ''));
+
+            // Прикажи опцију за ручно учитавање
+            document.querySelector('.upload-section').style.display = 'block';
         }
 
         // Priprema kviza nakon učitavanja pitanja
@@ -890,7 +1046,7 @@
         jsonFileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
-                fileNameElement.textContent = `Odabran fajl: ${file.name}`;
+                fileNameElement.textContent = `Одабран фајл: ${file.name}`;
                 
                 const reader = new FileReader();
                 
@@ -899,9 +1055,9 @@
                         quizData = JSON.parse(e.target.result);
                         originalOrder = [...quizData]; // Sačuvaj originalni redosled
                         
-                        // Validacija JSON-a
+                        // Валидација JSON-а
                         if (!Array.isArray(quizData) || quizData.length === 0) {
-                            throw new Error('Neispravan format JSON fajla');
+                            throw new Error('Неисправан формат JSON фајла');
                         }
                         
                         // Sakrij GitHub status
@@ -911,20 +1067,20 @@
                         prepareQuiz();
                         
                     } catch (error) {
-                        console.error('Greška pri parsiranju JSON-a:', error);
-                        errorMessage.textContent = `Došlo je do greške: ${error.message}`;
+                        console.error('Грешка при парсирању JSON-а:', error);
+                        errorMessage.textContent = `Дошло је до грешке: ${error.message}`;
                         errorMessage.style.display = 'block';
                     }
                 };
-                
+
                 reader.onerror = function() {
-                    errorMessage.textContent = 'Došlo je do greške pri čitanju fajla.';
+                    errorMessage.textContent = 'Дошло је до грешке при читању фајла.';
                     errorMessage.style.display = 'block';
                 };
-                
+
                 reader.readAsText(file);
             } else {
-                fileNameElement.textContent = 'Nijedan fajl nije odabran';
+                fileNameElement.textContent = 'Ниједан фајл није одабран';
             }
         });
 
@@ -933,7 +1089,7 @@
             if (quizData.length === 0) {
                 const file = jsonFileInput.files[0];
                 if (!file) {
-                    errorMessage.textContent = 'Molimo odaberite JSON fajl sa pitanjima';
+                    errorMessage.textContent = 'Молимо одаберите JSON фајл са питањима';
                     errorMessage.style.display = 'block';
                     return;
                 }
@@ -948,11 +1104,11 @@
             randomModeEnabled = !randomModeEnabled;
             
             if (randomModeEnabled) {
-                this.innerHTML = '<i class="fas fa-random"></i> Nasumična pitanja: Uključeno';
+                this.innerHTML = '<i class="fas fa-random"></i> Насумична питања: Укључено';
                 this.classList.add('active');
                 randomInfo.style.display = 'block';
             } else {
-                this.innerHTML = '<i class="fas fa-random"></i> Nasumična pitanja: Isključeno';
+                this.innerHTML = '<i class="fas fa-random"></i> Насумична питања: Искључено';
                 this.classList.remove('active');
                 randomInfo.style.display = 'none';
             }
@@ -996,7 +1152,8 @@
             answerSubmitted = false;
             const currentQuestion = quizData[currentQuestionIndex];
             questionTextElement.textContent = currentQuestion.question;
-            questionCounter.textContent = `Pitanje ${currentQuestionIndex + 1}/${quizData.length}`;
+            renderMath(questionTextElement);
+            questionCounter.textContent = `Питање ${currentQuestionIndex + 1}/${quizData.length}`;
             
             // Reset opcija
             optionsContainerElement.innerHTML = '';
@@ -1022,28 +1179,44 @@
                 const label = document.createElement('label');
                 label.htmlFor = `option-${index}`;
                 label.textContent = option.text;
-                
+
                 optionElement.appendChild(input);
                 optionElement.appendChild(label);
                 optionsContainerElement.appendChild(optionElement);
-                
-                // Dodaj event listener za promjenu stanja checkbox-a
+
+                // Клик било где у реду опције (ван label-а) такође мења checkbox
+                optionElement.addEventListener('click', (event) => {
+                    if (event.target === optionElement && !answerSubmitted) {
+                        input.checked = !input.checked;
+                        input.dispatchEvent(new Event('change'));
+                    }
+                });
+
+                // Промена стања checkbox-а омогућава дугме за потврду
                 input.addEventListener('change', () => {
                     const anyOptionSelected = Array.from(document.querySelectorAll('input[name="option"]'))
                         .some(checkbox => checkbox.checked);
-                    
+
                     submitButton.disabled = !anyOptionSelected;
                 });
             });
+
+            renderMath(optionsContainerElement);
             
             // Resetiraj feedback
             feedbackElement.style.display = 'none';
             feedbackElement.className = 'feedback';
             feedbackElement.innerHTML = '';
             
-            // Resetiraj dugmad
+            // Ресетуј дугмад — на последњем питању „Следеће" постаје „Резултати"
+            // и приказује се тек када је питање одговорено
             submitButton.disabled = userAnswers[currentQuestionIndex] !== null;
-            nextButton.style.display = currentQuestionIndex < quizData.length - 1 ? 'block' : 'none';
+            const isLastQuestion = currentQuestionIndex >= quizData.length - 1;
+            const isAnswered = userAnswers[currentQuestionIndex] != null;
+            nextButton.innerHTML = isLastQuestion
+                ? 'Резултати <i class="fas fa-chart-bar"></i>'
+                : 'Следеће <i class="fas fa-arrow-right"></i>';
+            nextButton.style.display = (!isLastQuestion || isAnswered) ? 'block' : 'none';
             prevButton.style.display = currentQuestionIndex > 0 ? 'block' : 'none';
             
             // Ažuriraj progress bar
@@ -1111,34 +1284,63 @@
                 }
             });
             
-            // Prikaži feedback
+            // Прикажи feedback — градимо DOM директно (textContent), јер текст
+            // опција може садржати знакове < и > који би поломили innerHTML
             feedbackElement.style.display = 'block';
             feedbackElement.classList.add(isCorrect ? 'correct' : 'incorrect');
-            
-            if (isCorrect) {
-                feedbackElement.innerHTML = 
-                    `<p><i class="fas fa-check-circle"></i> <strong>Tačan odgovor!</strong></p>
-                    <div class="explanation">
-                        <p><strong>Objašnjenje:</strong> ${currentQuestion.explanation}</p>
-                    </div>`;
-            } else {
-                // Pronađi tačne odgovore
-                const correctAnswers = correctOptions.map(index => 
-                    `<span class="highlight">${currentQuestion.options[index].text}</span>`
-                ).join('<br>');
-                
-                feedbackElement.innerHTML = 
-                    `<p><i class="fas fa-times-circle"></i> <strong>Netačan odgovor!</strong></p>
-                    <p><strong>Tačni odgovor(i):</strong></p>
-                    <div class="correct-answer">${correctAnswers}</div>
-                    <div class="explanation">
-                        <p><strong>Objašnjenje:</strong> ${currentQuestion.explanation}</p>
-                    </div>`;
+            feedbackElement.innerHTML = '';
+
+            const verdictParagraph = document.createElement('p');
+            const verdictIcon = document.createElement('i');
+            verdictIcon.className = isCorrect ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const verdictText = document.createElement('strong');
+            verdictText.textContent = isCorrect ? ' Тачан одговор!' : ' Нетачан одговор!';
+            verdictParagraph.appendChild(verdictIcon);
+            verdictParagraph.appendChild(verdictText);
+            feedbackElement.appendChild(verdictParagraph);
+
+            if (!isCorrect) {
+                const correctLabel = document.createElement('p');
+                const correctLabelText = document.createElement('strong');
+                correctLabelText.textContent = correctOptions.length > 1 ? 'Тачни одговори:' : 'Тачан одговор:';
+                correctLabel.appendChild(correctLabelText);
+                feedbackElement.appendChild(correctLabel);
+
+                const correctAnswersElement = document.createElement('div');
+                correctAnswersElement.className = 'correct-answer';
+                correctOptions.forEach((optionIndex, listIndex) => {
+                    if (listIndex > 0) {
+                        correctAnswersElement.appendChild(document.createElement('br'));
+                    }
+                    const answerSpan = document.createElement('span');
+                    answerSpan.className = 'highlight';
+                    answerSpan.textContent = currentQuestion.options[optionIndex].text;
+                    correctAnswersElement.appendChild(answerSpan);
+                });
+                feedbackElement.appendChild(correctAnswersElement);
             }
+
+            if (currentQuestion.explanation) {
+                const explanationElement = document.createElement('div');
+                explanationElement.className = 'explanation';
+                const explanationParagraph = document.createElement('p');
+                const explanationLabel = document.createElement('strong');
+                explanationLabel.textContent = 'Објашњење: ';
+                explanationParagraph.appendChild(explanationLabel);
+                explanationParagraph.appendChild(document.createTextNode(currentQuestion.explanation));
+                explanationElement.appendChild(explanationParagraph);
+                feedbackElement.appendChild(explanationElement);
+            }
+
+            renderMath(feedbackElement);
+            feedbackElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             
-            // Prikaži dugme za sledeće pitanje
+            // Прикажи дугме за следеће питање (на последњем води на резултате)
             submitButton.disabled = true;
-            nextButton.style.display = currentQuestionIndex < quizData.length - 1 ? 'block' : 'none';
+            nextButton.innerHTML = currentQuestionIndex < quizData.length - 1
+                ? 'Следеће <i class="fas fa-arrow-right"></i>'
+                : 'Резултати <i class="fas fa-chart-bar"></i>';
+            nextButton.style.display = 'block';
             prevButton.style.display = 'block';
             
             // Ažuriraj statistiku
@@ -1201,15 +1403,15 @@
             const percentage = Math.round((score / quizData.length) * 100);
             
             if (percentage >= 90) {
-                resultMessageElement.textContent = "Izvrsno! Potpuno ste savladali finansijski menadžment i računovodstvo. Čestitamo na izvanrednom rezultatu!";
+                resultMessageElement.textContent = "Изврсно! Потпуно сте савладали градиво из статистике. Честитамо на изванредном резултату!";
             } else if (percentage >= 75) {
-                resultMessageElement.textContent = "Odlično! Imate visoko znanje iz oblasti finansijskog menadžmenta i računovodstva.";
+                resultMessageElement.textContent = "Одлично! Имате високо знање из области статистике и вероватноће.";
             } else if (percentage >= 60) {
-                resultMessageElement.textContent = "Dobar rezultat! Imate solidno znanje, ali postoji prostor za poboljšanje u nekim oblastima.";
+                resultMessageElement.textContent = "Добар резултат! Имате солидно знање, али постоји простор за побољшање у неким областима.";
             } else if (percentage >= 40) {
-                resultMessageElement.textContent = "Prosečan rezultat. Preporučujemo dodatno proučavanje materijala kako biste popravili svoje znanje.";
+                resultMessageElement.textContent = "Просечан резултат. Препоручујемо додатно проучавање материјала како бисте поправили своје знање.";
             } else {
-                resultMessageElement.textContent = "Rezultat ispod očekivanja. Potrebno je ponoviti gradivo i vratiti se osnovama finansijskog menadžmenta.";
+                resultMessageElement.textContent = "Резултат испод очекивања. Потребно је поновити градиво и вратити се основама статистике.";
             }
             
             // Postavi progress bar na 100%
@@ -1229,8 +1431,8 @@
             // Vrati originalni redosled pitanja
             quizData = [...originalOrder];
             
-            // Resetuj dugme za nasumični redosled
-            randomModeBtn.innerHTML = '<i class="fas fa-random"></i> Nasumična pitanja: Isključeno';
+            // Ресетуј дугме за насумични редослед
+            randomModeBtn.innerHTML = '<i class="fas fa-random"></i> Насумична питања: Искључено';
             randomModeBtn.classList.remove('active');
             randomInfo.style.display = 'none';
             
@@ -1256,8 +1458,8 @@
         prevButton.addEventListener('click', prevQuestion);
         restartButton.addEventListener('click', restartQuiz);
 
-        // Pokreni automatsko učitavanje pitanja sa GitHub-a pri učitavanju stranice
-        window.addEventListener('DOMContentLoaded', loadGitHubQuestions);
+        // Покрени аутоматско учитавање питања при учитавању странице
+        window.addEventListener('DOMContentLoaded', loadQuestions);
     </script>
 </body>
 </html>
