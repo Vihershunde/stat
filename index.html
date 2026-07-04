@@ -3819,12 +3819,21 @@
         }
       });
 
-      // Рендеровање LaTeX формула (KaTeX auto-render, само \( ... \) делимитери)
+      // Рендеровање LaTeX формула (KaTeX auto-render, само \( ... \) делимитери).
+      // Макрои за \ne и \neq: KaTeX подразумевано слаже ≠ прецртавањем знака =
+      // карактером из приватне зоне фонта (U+E020) који постоји само у KaTeX
+      // web-фонту — ако се тај фонт не учита (мобилна мрежа, ad-blocker),
+      // уместо ≠ се види квадратић. Макро исписује прави знак ≠ (U+2260)
+      // који има сваки системски фонт.
       function renderMath(element) {
         if (typeof renderMathInElement === "function") {
           renderMathInElement(element, {
             delimiters: [{ left: "\\(", right: "\\)", display: false }],
             throwOnError: false,
+            macros: {
+              "\\ne": '\\mathrel{\\char"2260}',
+              "\\neq": '\\mathrel{\\char"2260}',
+            },
           });
         }
       }
@@ -4119,7 +4128,10 @@
 
         // На телефону одмах доведи питање на врх екрана
         if (mobileView.matches) {
-          questionContainer.scrollIntoView({ behavior: "auto", block: "start" });
+          questionContainer.scrollIntoView({
+            behavior: "auto",
+            block: "start",
+          });
         }
 
         // Resetiraj feedback
