@@ -461,6 +461,8 @@
         width: 25px;
         height: 25px;
         cursor: pointer;
+        accent-color: #1a2a6c;
+        flex-shrink: 0;
       }
 
       .option label {
@@ -4071,12 +4073,13 @@
           const optionElement = document.createElement("div");
           optionElement.classList.add("option");
 
+          // Радио дугме — увек је тачно највише једно, па је избор једнострук
           const input = document.createElement("input");
-          input.type = "checkbox";
+          input.type = "radio";
           input.id = `option-${index}`;
           input.name = "option";
           input.value = index;
-          input.disabled = false;
+          input.disabled = userAnswers[currentQuestionIndex] != null;
 
           // Označi prethodno odabrane opcije
           if (
@@ -4094,19 +4097,19 @@
           optionElement.appendChild(label);
           optionsContainerElement.appendChild(optionElement);
 
-          // Клик било где у реду опције (ван label-а) такође мења checkbox
+          // Клик било где у реду опције (ван label-а) такође бира одговор
           optionElement.addEventListener("click", (event) => {
             if (event.target === optionElement && !answerSubmitted) {
-              input.checked = !input.checked;
+              input.checked = true;
               input.dispatchEvent(new Event("change"));
             }
           });
 
-          // Промена стања checkbox-а омогућава дугме за потврду
+          // Избор одговора омогућава дугме за потврду
           input.addEventListener("change", () => {
             const anyOptionSelected = Array.from(
               document.querySelectorAll('input[name="option"]'),
-            ).some((checkbox) => checkbox.checked);
+            ).some((radio) => radio.checked);
 
             submitButton.disabled = !anyOptionSelected;
           });
@@ -4170,7 +4173,12 @@
         const currentQuestion = quizData[currentQuestionIndex];
         const selectedOptions = Array.from(
           document.querySelectorAll('input[name="option"]:checked'),
-        ).map((checkbox) => parseInt(checkbox.value));
+        ).map((radio) => parseInt(radio.value));
+
+        // Закључај одговоре — после потврде избор се више не може мењати
+        document
+          .querySelectorAll('input[name="option"]')
+          .forEach((radio) => (radio.disabled = true));
 
         // Proveri koje opcije su tačne
         const correctOptions = currentQuestion.options
